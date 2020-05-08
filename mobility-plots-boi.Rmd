@@ -39,6 +39,8 @@ library(RcppRoll)
 library(scales)
 library(hrbrthemes)
 library(gt)
+library(officer)
+library(rvg)
 ```
 
 ```{r}
@@ -89,7 +91,7 @@ oecd_iso3c <-
 ```{r}
 interesting_countries <- c(
   "Israel", "Austria", "Sweden", "Singapore", "Germany",
-  "Korea, South", "US", "United Kingdom", "Taiwan*"
+  "Spain", "US", "United Kingdom"
 )
 ```
 
@@ -650,7 +652,7 @@ p_phase_out_work <-
   filter(country %in% interesting_countries) %>% 
   ggplot(aes(date, gcmr_workplaces, color = dconfirmed_ma/population*1e6)) +
   geom_line(size = 1.5) +
-  facet_wrap(~ country, ncol = 5) +
+  facet_wrap(~ country, ncol = 3) +
   geom_hline(aes(yintercept = 0), color = "black", linetype = 2, size = 0.5) +
   scale_color_viridis_c() +
   scale_x_date(labels = date_format("%d/%m")) +
@@ -678,7 +680,7 @@ p_phase_out_retail <- share_out %>%
   filter(country %in% interesting_countries) %>%
   ggplot(aes(date, gcmr_retail_recreation, color = dconfirmed_ma/population*1e6)) +
   geom_line(size = 1.5) +
-  facet_wrap(~ country, ncol = 5) +
+  facet_wrap(~ country, ncol = 3) +
   geom_hline(aes(yintercept = 0), color = "black", linetype = 2, size = 0.5) +
   scale_color_viridis_c() +
   scale_x_date(labels = date_format("%d/%m")) +
@@ -734,12 +736,13 @@ p_phase_out <-
   share_out %>%
   filter(
     max_share > 0,
-    max_confirmed > 10000
+    max_confirmed > 10000,
+    region %in% c("North America", "Europe & Central Asia")
   ) %>% 
   ggplot(aes(date, share_out, color = dconfirmed_ma/population*1e6)) +
   geom_line(size = 1.5) +
-  facet_wrap(~ country, ncol = 5) +
-  geom_hline(aes(yintercept = 0), color = "black", linetype = 2, size = 0.5) +
+  facet_wrap(~ country, nrow = 2) +
+  geom_hline(aes(yintercept = 0), color = "black") +
   scale_color_viridis_c() +
   scale_x_date(labels = date_format("%d/%m")) +
   theme_ipsum() +
@@ -752,7 +755,7 @@ p_phase_out <-
     subtitle = "(7-day moving avarage)",
     y = "Change from baseline (percent)",
     x = "",
-    color = "Daily change in confirmed cases\n per million people (7-day moving average)",
+    color = "Daily change in confirmed cases per million people\n(7-day moving average)",
     caption = "\nSource: Apple Mobility Trends Report, ACAPS, and Johns Hopkins University CSSE."
   ) +
   guides(color = guide_colourbar(barwidth = 10, barheight = .5)) 
@@ -760,7 +763,57 @@ p_phase_out <-
 p_phase_out
 ```
 
-# Measures table
+# Save ppt
+
+save as ppt
+```{r,echo=FALSE}
+e_driving_ribbon        <- dml(ggobj = p_driving_ribbon)
+e_work_ribbon           <- dml(ggobj = p_work_ribbon)
+e_retail_ribbon         <- dml(ggobj = p_retail_ribbon)
+e_israel_apple          <- dml(ggobj = p_israel_apple)
+e_israel_gcmr           <- dml(ggobj = p_israel_gcmr)
+e_phase_out             <- dml(ggobj = p_phase_out)
+e_phase_out_driving     <- dml(ggobj = p_phase_out_driving)
+e_phase_out_retail      <- dml(ggobj = p_phase_out_retail)
+e_phase_out_work        <- dml(ggobj = p_phase_out_work)
+e_regional_amtr         <- dml(ggobj = p_regional_amtr)
+e_regional_gcmr_retail  <- dml(ggobj = p_regional_gcmr_retail)
+e_regional_gcmr_transit <- dml(ggobj = p_regional_gcmr_transit)
+e_regional_gcmr_work    <- dml(ggobj = p_regional_gcmr_work)
+```
+
+
+```{r, echo=FALSE}
+read_pptx() %>% 
+  add_slide() %>% 
+  ph_with(e_israel_gcmr, location = ph_location_type(type = "body")) %>%
+  add_slide() %>% 
+  ph_with(e_israel_apple, location = ph_location_type(type = "body")) %>%
+  add_slide() %>% 
+  ph_with(e_regional_gcmr_work, location = ph_location_type(type = "body")) %>%
+  add_slide() %>% 
+  ph_with(e_regional_gcmr_retail, location = ph_location_type(type = "body")) %>%
+  add_slide() %>% 
+  ph_with(e_regional_gcmr_transit, location = ph_location_type(type = "body")) %>%
+  add_slide() %>% 
+  ph_with(e_regional_amtr, location = ph_location_type(type = "body")) %>%
+  add_slide() %>% 
+  ph_with(e_work_ribbon, location = ph_location_type(type = "body")) %>%
+  add_slide() %>% 
+  ph_with(e_retail_ribbon, location = ph_location_type(type = "body")) %>%
+  add_slide() %>% 
+  ph_with(e_driving_ribbon, location = ph_location_type(type = "body")) %>% 
+  add_slide() %>% 
+  ph_with(e_phase_out_work, location = ph_location_type(type = "body")) %>% 
+  add_slide() %>% 
+  ph_with(e_phase_out_retail, location = ph_location_type(type = "body")) %>% 
+  add_slide() %>% 
+  ph_with(e_phase_out_driving, location = ph_location_type(type = "body")) %>% 
+  add_slide() %>% 
+  print(target = "ppt/mobility-plots.pptx")
+```
+
+# Phase-out measures table
 
 ```{r}
 phase_out_measure <- acaps %>%
