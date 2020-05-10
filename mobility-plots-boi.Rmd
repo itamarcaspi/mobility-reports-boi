@@ -49,23 +49,25 @@ theme_set(theme_ipsum())
 
 # Download latest data
 ```{r}
+cached <- FALSE
+
 merged <- 
   download_merged_data(cached = TRUE)
 
 gcmr_raw_country <- 
-  download_google_cmr_data(cached = TRUE, type = "country")
+  download_google_cmr_data(cached = cached, type = "country")
 
 gcmr_raw_country_region <- 
-  download_google_cmr_data(cached = TRUE, type = "country_region")
+  download_google_cmr_data(cached = cached, type = "country_region")
 
 mtr_raw_country <- 
-  download_apple_mtr_data(cached = TRUE, type = "country")
+  download_apple_mtr_data(cached = cached, type = "country")
 
 mtr_raw_country_region <- 
-  download_apple_mtr_data(cached = TRUE, type = "country_region")
+  download_apple_mtr_data(cached = cached, type = "country_region")
 
 acaps <- 
-  download_acaps_npi_data(cached = TRUE)
+  download_acaps_npi_data(cached = cached)
 ```
 
 # Print latest observations for Israel
@@ -92,6 +94,12 @@ oecd_iso3c <-
 interesting_countries <- c(
   "Israel", "Austria", "Sweden", "Singapore", "Germany",
   "Spain", "US", "United Kingdom"
+)
+
+phasing_countries <- c(
+  "Israel", "Austria", "Sweden", "Singapore", "Germany",
+  "Spain", "US", "Belgium", "France", "Italy", "Switzerland",
+  "Korea, South"
 )
 ```
 
@@ -413,11 +421,11 @@ p_work_ribbon <- israel_gcmr %>%
     color = "#3E4A89",
     size = 1,
   ) +
-  geom_ribbon(
-    aes(ymin = min, ymax = max),
-    fill = "#6DCD59",
-    alpha = 0.2
-  ) +
+  # geom_ribbon(
+  #   aes(ymin = min, ymax = max),
+  #   fill = "#6DCD59",
+  #   alpha = 0.2
+  # ) +
   geom_ribbon(
     aes(ymin = gcmr_q10, ymax = gcmr_q90),
     fill = "#6DCD59",
@@ -485,11 +493,11 @@ p_retail_ribbon <- israel_gcmr %>%
     color = "#3E4A89",
     size = 1,
   ) +
-  geom_ribbon(
-    aes(ymin = min, ymax = max),
-    fill = "#6DCD59",
-    alpha = 0.2
-  ) +
+  # geom_ribbon(
+  #   aes(ymin = min, ymax = max),
+  #   fill = "#6DCD59",
+  #   alpha = 0.2
+  # ) +
   geom_ribbon(
     aes(ymin = gcmr_q10, ymax = gcmr_q90),
     fill = "#6DCD59",
@@ -555,11 +563,11 @@ p_driving_ribbon <- israel_driving %>%
     color = "#3E4A89",
     size = 1,
   ) +
-  geom_ribbon(
-    aes(ymin = min, ymax = max),
-    fill = "#6DCD59",
-    alpha = 0.2
-  ) +
+  # geom_ribbon(
+  #   aes(ymin = min, ymax = max),
+  #   fill = "#6DCD59",
+  #   alpha = 0.2
+  # ) +
   geom_ribbon(
     aes(ymin = mtr_q10, ymax = mtr_q90),
     fill = "#6DCD59",
@@ -649,10 +657,10 @@ share_out[share_out$iso3c == "TWN",]$population <- 23810261
 ```{r}
 p_phase_out_work <- 
   share_out %>%
-  filter(country %in% interesting_countries) %>% 
+  filter(country %in% phasing_countries) %>% 
   ggplot(aes(date, gcmr_workplaces, color = dconfirmed_ma/population*1e6)) +
   geom_line(size = 1.5) +
-  facet_wrap(~ country, ncol = 3) +
+  facet_wrap(~ country, ncol = 6) +
   geom_hline(aes(yintercept = 0), color = "black", linetype = 2, size = 0.5) +
   scale_color_viridis_c() +
   scale_x_date(labels = date_format("%d/%m")) +
@@ -662,11 +670,11 @@ p_phase_out_work <-
     plot.caption = element_text(hjust = 0)
   ) +
   labs(
-    title = "Mobility Trends to Workplaces in Phasing-out Countries",
-    subtitle = "(7-day moving avarage)",
+    title = "Mobility Trends to Workplaces in a Sample of Phasing-out Countries",
+    subtitle = "(7-day moving average)",
     y = "Change from baseline (percent)",
     x = "",
-    color = "Daily change in confirmed cases\n per million people (7-day moving average)",
+    color = "Daily change in confirmed cases per million people\n(7-day moving average)",
     caption = "\nSource: Google Community Mobility Report, ACAPS, and Johns Hopkins University CSSE."
   ) +
   guides(color = guide_colourbar(barwidth = 10, barheight = .5))
@@ -677,10 +685,10 @@ p_phase_out_work
 ## Retail
 ```{r}
 p_phase_out_retail <- share_out %>% 
-  filter(country %in% interesting_countries) %>%
+  filter(country %in% phasing_countries) %>%
   ggplot(aes(date, gcmr_retail_recreation, color = dconfirmed_ma/population*1e6)) +
   geom_line(size = 1.5) +
-  facet_wrap(~ country, ncol = 3) +
+  facet_wrap(~ country, ncol = 6) +
   geom_hline(aes(yintercept = 0), color = "black", linetype = 2, size = 0.5) +
   scale_color_viridis_c() +
   scale_x_date(labels = date_format("%d/%m")) +
@@ -690,11 +698,11 @@ p_phase_out_retail <- share_out %>%
     plot.caption = element_text(hjust = 0)
   ) +
   labs(
-    title = "Mobility Trends to Places of Retail and Recreation in Phasing-out Countries",
-    subtitle = "(7-day moving avarage)",
+    title = "Mobility Trends to Places of Retail and Recreation in a Sample of Phasing-out Countries",
+    subtitle = "(7-day moving average)",
     y = "Change from baseline (percent)",
     x = "",
-    color = "Daily change in confirmed cases\n per million people (7-day moving average)",
+    color = "Daily change in confirmed cases per million people\n(7-day moving average)",
     caption = "\nSource: Google Community Mobility Report, ACAPS, and Johns Hopkins University CSSE."
   ) +
   guides(color = guide_colourbar(barwidth = 10, barheight = .5)) 
@@ -719,7 +727,7 @@ p_phase_out_driving <- share_out %>%
   ) +
   labs(
     title = "Direction Requests in Phasing-out Countries",
-    subtitle = "(7-day moving avarage)",
+    subtitle = "(7-day moving average)",
     y = "Change from baseline (percent)",
     x = "",
     color = "Daily change in confirmed cases\n per million people (7-day moving average)",
@@ -752,7 +760,7 @@ p_phase_out <-
   ) +
   labs(
     title = "Phase-out index and COVID-19 Spread",
-    subtitle = "(7-day moving avarage)",
+    subtitle = "(7-day moving average)",
     y = "Change from baseline (percent)",
     x = "",
     color = "Daily change in confirmed cases per million people\n(7-day moving average)",
