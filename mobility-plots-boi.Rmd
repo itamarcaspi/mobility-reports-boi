@@ -648,11 +648,12 @@ phase_in_out <-
   replace_na(list(n_phase_out = 0, n_phase_in = 0)) %>% 
   group_by(iso3c) %>% 
   mutate(
-    cum_phase_out = cumsum(n_phase_out),
-    cum_phase_in  = cumsum(n_phase_in),
-    share_out     = 100*cum_phase_out/cum_phase_in
+    cum_phase_out  = cumsum(n_phase_out),
+    cum_phase_in   = cumsum(n_phase_in),
+    share_out      = 100*cum_phase_out/cum_phase_in,
+    share_out_diff = cum_phase_out - cum_phase_in
   ) %>% 
-  select(country, iso3c, date, cum_phase_in, cum_phase_out, share_out) %>% 
+  select(iso3c, date, cum_phase_in, cum_phase_out, share_out) %>% 
   drop_na()
 ```
 
@@ -661,7 +662,7 @@ share_out <-
   jhu_raw_country %>%
   left_join(gcmr_raw_country, by = c("iso3c", "date")) %>% 
   left_join(mtr_raw_country, by = c("iso3c", "date")) %>% 
-  left_join(phase_in_out) %>% 
+  left_join(phase_in_out, by = c("iso3c", "date")) %>% 
   left_join(wbank_raw_country %>% select(iso3c, population)) %>% 
   group_by(iso3c) %>% 
   mutate(
@@ -690,7 +691,7 @@ p_phase_out_work <-
   geom_hline(aes(yintercept = 0), color = "black", linetype = 2, size = 0.5) +
   scale_color_viridis_c() +
   scale_x_date(labels = date_format("%d/%m")) +
-  theme_ipsum(20) +
+  theme_ipsum() +
   theme(
     legend.position="bottom",
     plot.caption = element_text(hjust = 0)
