@@ -54,6 +54,12 @@ cached <- FALSE
 merged <- 
   download_merged_data(cached = TRUE)
 
+wbank_raw_country <- 
+  download_wbank_data(cached = TRUE)
+
+jhu_raw_country <-
+  download_jhu_csse_covid19_data(cached = cached)
+
 gcmr_raw_country <- 
   download_google_cmr_data(cached = cached, type = "country")
 
@@ -92,17 +98,32 @@ oecd_iso3c <-
 # Other countries of interst
 ```{r}
 interesting_countries <- c(
-  "Israel", "Austria", "Sweden", "Singapore", "Germany",
-  "Spain", "US", "United Kingdom"
+  "Israel", "Sweden", "Singapore", "Germany",
+  "Spain", "US", "United Kingdom", "Korea, South"
 )
 
 phasing_countries <- c(
   "Israel", "Austria", "Sweden", "Singapore", "Germany",
-  "Spain", "US", "Belgium", "France", "Italy", "Switzerland",
+  "Spain", "United States", "Belgium", "France", "Italy", "Switzerland",
   "Korea, South"
 )
+
+box_countries <- c("Israel", "Germany", "Austria",
+                   "Sweden", "Singapore", "South Korea",
+                   "United States", "United Kingdom", "Taiwan")
 ```
 
+```{r}
+activity <- tribble(
+  ~location, ~activity,
+  "grocery_pharmacy", "Consumption",
+  "parks", "Leisure",
+  "residential", "Leisure",
+  "retail_recreation", "Consumption",
+  "transit_stations", "Labor",
+  "workplaces", "Labor"
+)
+```
 
 # Filter OECD data
 ```{r}
@@ -125,7 +146,8 @@ israel_gcmr <-
   select(-c(iso3c, timestamp)) %>% 
   drop_na() %>% 
   mutate_if(is.numeric, ~ roll_mean(., 7, fill = NA, align = "right")) %>% 
-  pivot_longer(-date, values_to = "index", names_to = "location")
+  pivot_longer(-date, values_to = "index", names_to = "location") %>% 
+  left_join(activity)
   
 p_israel_gcmr <- israel_gcmr %>% 
   mutate(
@@ -137,7 +159,7 @@ p_israel_gcmr <- israel_gcmr %>%
   labs(
     y = "Change compared to baseline (percent)",
     x = "",
-    title = "Mobility trends for Israel by Place",
+    title = "Mobility trends for Israel by Economic Activity",
     subtitle = "(7-day moving average)",
     color = "",
     lty = "",
@@ -151,7 +173,8 @@ p_israel_gcmr <- israel_gcmr %>%
   scale_color_viridis_d() +
   gghighlight(last(index) != 0, label_key = location) +
   geom_hline(aes(yintercept = 0), color = "black", linetype = 2, size = 0.5) +
-  annotate("rect", xmin = ymd("2020-03-17"), xmax = ymd("2020-04-19"), ymin = -Inf, ymax = +Inf, alpha = 0.1)
+  annotate("rect", xmin = ymd("2020-03-17"), xmax = ymd("2020-04-19"), ymin = -Inf, ymax = +Inf, alpha = 0.1) +
+  facet_wrap(~ activity)
 
 
 p_israel_gcmr 
@@ -432,8 +455,8 @@ p_work_ribbon <- israel_gcmr %>%
     alpha = 0.2
   ) +
   geom_hline(aes(yintercept = 0), color = "black", linetype = 2, size = 0.5) +
-  annotate("text", x = ymd("2020-05-4"), y = -0.35, label = "OECD", color = "#6DCD59") +
-  annotate("text", x = ymd("2020-05-4"), y = -0.5, label = "Israel", color = "#3E4A89") +
+  annotate("text", x = ymd("2020-05-12"), y = -.40, label = "OECD", color = "#6DCD59") +
+  annotate("text", x = ymd("2020-05-12"), y = -.30, label = "Israel", color = "#3E4A89") +
   labs(
     y = "Change compared to baseline (percent)",
     x = "",
@@ -441,7 +464,7 @@ p_work_ribbon <- israel_gcmr %>%
     subtitle = "(Israel vs. OECD median, 7-day moving average)",
     color = "",
     lty = "",
-    caption = "Notes: Dark and light shaded areas around the green line indicate the 90-10 percentile and max-min range, respectively.\nSource: Google Community Mobility Report."
+    caption = "Notes: Shaded areas around the green line indicate the 90-10 percentile range..\nSource: Google Community Mobility Report."
   ) +
   scale_x_date(labels = date_format("%d/%m")) +
   theme(
@@ -504,8 +527,8 @@ p_retail_ribbon <- israel_gcmr %>%
     alpha = 0.2
   ) +
   geom_hline(aes(yintercept = 0), color = "black", linetype = 2, size = 0.5) +
-  annotate("text", x = ymd("2020-05-4"), y = -0.55, label = "OECD", color = "#6DCD59") +
-  annotate("text", x = ymd("2020-05-4"), y = -0.7, label = "Israel", color = "#3E4A89") +
+  annotate("text", x = ymd("2020-05-12"), y = -.40, label = "OECD", color = "#6DCD59") +
+  annotate("text", x = ymd("2020-05-12"), y = -.55, label = "Israel", color = "#3E4A89") +
   labs(
     y = "Change compared to baseline (percent)",
     x = "",
@@ -513,7 +536,7 @@ p_retail_ribbon <- israel_gcmr %>%
     subtitle = "(Israel vs. OECD median, 7-day moving average)",
     color = "",
     lty = "",
-    caption = "Notes: Dark and light shaded areas around the green line indicate the 90-10 percentile and max-min range, respectively.\nSource: Google Community Mobility Report."
+    caption = "Notes: Shaded areas around the green line indicate the 90-10 percentile range.\nSource: Google Community Mobility Report."
   ) +
   scale_x_date(labels = date_format("%d/%m")) +
   theme(
@@ -574,8 +597,8 @@ p_driving_ribbon <- israel_driving %>%
     alpha = 0.2
   ) +
   geom_hline(aes(yintercept = 100), color = "black", linetype = 2, size = 0.5) +
-  annotate("text", x = ymd("2020-05-7"), y = 45, label = "OECD", color = "#6DCD59") +
-  annotate("text", x = ymd("2020-05-7"), y = 55, label = "Israel", color = "#3E4A89") +
+  annotate("text", x = ymd("2020-05-16"), y = 60, label = "OECD", color = "#6DCD59") +
+  annotate("text", x = ymd("2020-05-16"), y = 75, label = "Israel", color = "#3E4A89") +
   labs(
     y = "Change compared to baseline (percent)",
     x = "",
@@ -583,7 +606,7 @@ p_driving_ribbon <- israel_driving %>%
     subtitle = "(Israel vs. OECD median, 7-day moving average)",
     color = "",
     lty = "",
-    caption = "Notes: Dark and light shaded areas around the green line indicate the 90-10 percentile and max-min range, respectively.\nSource: Apple Mobility Trends Report."
+    caption = "Notes: Shaded areas around the green line indicate the 90-10 percentile range.\nSource: Apple Mobility Trends Report."
   ) +
   scale_x_date(labels = date_format("%d/%m")) +
   theme(
@@ -635,36 +658,39 @@ phase_in_out <-
 
 ```{r}
 share_out <- 
-  merged %>% 
+  jhu_raw_country %>%
+  left_join(gcmr_raw_country, by = c("iso3c", "date")) %>% 
+  left_join(mtr_raw_country, by = c("iso3c", "date")) %>% 
   left_join(phase_in_out) %>% 
+  left_join(wbank_raw_country %>% select(iso3c, population)) %>% 
   group_by(iso3c) %>% 
   mutate(
     max_share     = max(share_out, na.rm = TRUE),
     max_confirmed = max(confirmed, na.rm = TRUE),
     dconfirmed    = c(NA, diff(confirmed)),
     dconfirmed_ma = roll_mean(dconfirmed, 7, fill = 0, align = "right"),
-    gcmr_workplaces = roll_mean(gcmr_workplaces, 7, fill = 0, align = "right"),
-    gcmr_retail_recreation = roll_mean(gcmr_retail_recreation, 7, fill = 0, align = "right"),
-    apple_mtr_driving = roll_mean(apple_mtr_driving, 7, fill = 0, align = "right")
+    gcmr_workplaces = roll_mean(workplaces, 7, fill = 0, align = "right"),
+    gcmr_retail_recreation = roll_mean(retail_recreation, 7, fill = 0, align = "right"),
+    apple_mtr_driving = roll_mean(driving, 7, fill = 0, align = "right")
   ) %>% 
-  filter(date >= ymd("2020-02-15"))
-
-share_out[share_out$iso3c == "TWN",]$population <- 23810261
-
+  filter(date >= ymd("2020-02-15")) %>% 
+  mutate(
+    population = replace(population, iso3c == "TWN", 23810261)
+  )
 ```
 
 ## Workplaces
 ```{r}
 p_phase_out_work <- 
   share_out %>%
-  filter(country %in% phasing_countries) %>% 
+  filter(country %in% interesting_countries) %>% 
   ggplot(aes(date, gcmr_workplaces, color = dconfirmed_ma/population*1e6)) +
   geom_line(size = 1.5) +
-  facet_wrap(~ country, ncol = 6) +
+  facet_wrap(~ country, nrow = 2) +
   geom_hline(aes(yintercept = 0), color = "black", linetype = 2, size = 0.5) +
   scale_color_viridis_c() +
   scale_x_date(labels = date_format("%d/%m")) +
-  theme_ipsum() +
+  theme_ipsum(20) +
   theme(
     legend.position="bottom",
     plot.caption = element_text(hjust = 0)
@@ -684,11 +710,12 @@ p_phase_out_work
 
 ## Retail
 ```{r}
-p_phase_out_retail <- share_out %>% 
-  filter(country %in% phasing_countries) %>%
+p_phase_out_retail <- 
+  share_out %>% 
+  filter(country %in% interesting_countries) %>%
   ggplot(aes(date, gcmr_retail_recreation, color = dconfirmed_ma/population*1e6)) +
   geom_line(size = 1.5) +
-  facet_wrap(~ country, ncol = 6) +
+  facet_wrap(~ country, nrow = 2) +
   geom_hline(aes(yintercept = 0), color = "black", linetype = 2, size = 0.5) +
   scale_color_viridis_c() +
   scale_x_date(labels = date_format("%d/%m")) +
@@ -712,11 +739,12 @@ p_phase_out_retail
 
 ## Driving
 ```{r}
-p_phase_out_driving <- share_out %>% 
+p_phase_out_driving <- 
+  share_out %>% 
   filter(country %in% interesting_countries) %>%
   ggplot(aes(date, apple_mtr_driving, color = dconfirmed_ma/population*1e6)) +
   geom_line(size = 1.5) +
-  facet_wrap(~ country, ncol = 5) +
+  facet_wrap(~ country, nrow = 2) +
   geom_hline(aes(yintercept = 100), color = "black", linetype = 2, size = 0.5) +
   scale_color_viridis_c() +
   scale_x_date(labels = date_format("%d/%m")) +
@@ -743,9 +771,7 @@ p_phase_out_driving
 p_phase_out <- 
   share_out %>%
   filter(
-    max_share > 0,
-    max_confirmed > 10000,
-    region %in% c("North America", "Europe & Central Asia")
+    country %in% interesting_countries
   ) %>% 
   ggplot(aes(date, share_out, color = dconfirmed_ma/population*1e6)) +
   geom_line(size = 1.5) +
