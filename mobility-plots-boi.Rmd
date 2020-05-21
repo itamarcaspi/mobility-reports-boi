@@ -55,7 +55,7 @@ merged <-
   download_merged_data(cached = TRUE)
 
 wbank_raw_country <- 
-  download_wbank_data(cached = TRUE)
+  download_wbank_data(cached = cached)
 
 jhu_raw_country <-
   download_jhu_csse_covid19_data(cached = cached)
@@ -104,7 +104,7 @@ interesting_countries <- c(
 
 phasing_countries <- c(
   "Israel", "Austria", "Sweden", "Singapore", "Germany",
-  "Spain", "United States", "Belgium", "France", "Italy", "Switzerland",
+  "Spain", "US", "Belgium", "France", "Italy", "Switzerland",
   "Korea, South"
 )
 
@@ -171,11 +171,14 @@ p_israel_gcmr <- israel_gcmr %>%
     plot.caption = element_text(hjust = 0)
   ) +
   scale_color_viridis_d() +
-  gghighlight(last(index) != 0, label_key = location) +
-  geom_hline(aes(yintercept = 0), color = "black", linetype = 2, size = 0.5) +
-  annotate("rect", xmin = ymd("2020-03-17"), xmax = ymd("2020-04-19"), ymin = -Inf, ymax = +Inf, alpha = 0.1) +
-  facet_wrap(~ activity)
+    geom_hline(aes(yintercept = 0), color = "black", linetype = 2, size = 0.5) +
 
+  gghighlight(last(index) != 0, label_key = location) +
+  annotate("rect", xmin = ymd("2020-03-17"), xmax = ymd("2020-04-19"), ymin = -Inf, ymax = +Inf, alpha = 0.1) 
+
+p_israel_gcmr_facet <- 
+  p_israel_gcmr +
+  facet_wrap(~ activity)
 
 p_israel_gcmr 
 ```
@@ -771,9 +774,7 @@ p_phase_out_driving
 ```{r}
 p_phase_out <- 
   share_out %>%
-  filter(
-    country %in% interesting_countries
-  ) %>% 
+  filter(country %in% phasing_countries) %>% 
   ggplot(aes(date, share_out, color = dconfirmed_ma/population*1e6)) +
   geom_line(size = 1.5) +
   facet_wrap(~ country, nrow = 2) +
@@ -807,6 +808,7 @@ e_work_ribbon           <- dml(ggobj = p_work_ribbon)
 e_retail_ribbon         <- dml(ggobj = p_retail_ribbon)
 e_israel_apple          <- dml(ggobj = p_israel_apple)
 e_israel_gcmr           <- dml(ggobj = p_israel_gcmr)
+e_israel_gcmr_facet     <- dml(ggobj = p_israel_gcmr_facet)
 e_phase_out             <- dml(ggobj = p_phase_out)
 e_phase_out_driving     <- dml(ggobj = p_phase_out_driving)
 e_phase_out_retail      <- dml(ggobj = p_phase_out_retail)
@@ -822,6 +824,8 @@ e_regional_gcmr_work    <- dml(ggobj = p_regional_gcmr_work)
 read_pptx() %>% 
   add_slide() %>% 
   ph_with(e_israel_gcmr, location = ph_location_type(type = "body")) %>%
+  add_slide() %>% 
+  ph_with(e_israel_gcmr_facet, location = ph_location_type(type = "body")) %>%
   add_slide() %>% 
   ph_with(e_israel_apple, location = ph_location_type(type = "body")) %>%
   add_slide() %>% 
@@ -845,6 +849,7 @@ read_pptx() %>%
   add_slide() %>% 
   ph_with(e_phase_out_driving, location = ph_location_type(type = "body")) %>% 
   add_slide() %>% 
+  ph_with(e_phase_out, location = ph_location_type(type = "body")) %>% 
   print(target = "ppt/mobility-plots.pptx")
 ```
 
